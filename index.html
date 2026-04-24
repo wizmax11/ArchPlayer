@@ -3,1293 +3,1234 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ArchPlayer</title>
+<title>ArchPlayer — Minimal. Local. Yours.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" sizes="32x32" href="fav.png">   
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0e0f11;
-    --surface: #13141a;
-    --surface2: #1a1b22;
-    --surface3: #21222c;
-    --border: rgba(200,205,255,0.06);
-    --border2: rgba(200,205,255,0.10);
-    --text: #e8e9f0;
-    --text-muted: rgba(200,202,220,0.5);
-    --text-dim: rgba(200,202,220,0.28);
-    --accent: #7eb8f7;
-    --accent-dim: rgba(126,184,247,0.12);
-    --accent-glow: rgba(126,184,247,0.22);
-    --red: #f47a7a;
-    --radius: 14px;
-    --radius-sm: 8px;
-    --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
-  }
-
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    overflow: hidden;
-    user-select: none;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ─── LAYOUT ─── */
-  .app {
-    display: flex;
-    height: 100vh;
-    width: 100vw;
-    flex-direction: column;
-  }
-
-  /* ─── TITLEBAR ─── */
-  .titlebar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    height: 52px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 10;
-  }
-
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 17px;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .logo-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent-glow);
-  }
-
-  .titlebar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-muted);
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background var(--transition), color var(--transition);
-  }
-  .icon-btn:hover { background: var(--surface3); color: var(--text); }
-
-  /* ─── MAIN AREA ─── */
-  .main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  /* ─── VIDEO STAGE ─── */
-  .stage {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: #000;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .video-wrap {
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    cursor: none;
-  }
-
-  .video-wrap.cursor-visible { cursor: default; }
-
-  video {
-    max-width: 100%;
-    max-height: 100%;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-  }
-
-  /* ─── DROP OVERLAY ─── */
-  .drop-zone {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    z-index: 5;
-    transition: opacity var(--transition);
-    background: #000;
-  }
-
-  .drop-zone.hidden { opacity: 0; pointer-events: none; }
-
-  .drop-ring {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: border-color var(--transition), box-shadow var(--transition);
-  }
-
-  .drop-zone.drag-over .drop-ring {
-    border-color: var(--accent);
-    box-shadow: 0 0 40px var(--accent-glow), inset 0 0 40px rgba(200,255,0,0.05);
-  }
-
-  .drop-ring svg { color: var(--text-dim); transition: color var(--transition); }
-  .drop-zone.drag-over .drop-ring svg { color: var(--accent); }
-
-  .drop-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-muted);
-    letter-spacing: -0.02em;
-  }
-
-  .drop-sub {
-    font-size: 13px;
-    color: var(--text-dim);
-  }
-
-  .open-btn {
-    margin-top: 8px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--text);
-    padding: 10px 22px;
-    border-radius: 100px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background var(--transition), border-color var(--transition), transform 0.1s;
-    letter-spacing: 0.01em;
-  }
-
-  .open-btn:hover { background: var(--surface3); border-color: var(--border2); }
-  .open-btn:active { transform: scale(0.97); }
-
-  /* ─── SUBTITLE OVERLAY ─── */
-  .subtitle-overlay {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 8;
-    text-align: center;
-    max-width: 80%;
-    pointer-events: none;
-  }
-
-  .subtitle-text {
-    display: inline;
-    background: none;
-    color: #ffffff;
-    font-size: 22px;
-    font-weight: 500;
-    line-height: 1.65;
-    letter-spacing: 0.01em;
-    text-shadow:
-      0 1px 4px rgba(0,0,0,0.95),
-      0 2px 14px rgba(0,0,0,0.85),
-      0 0 32px rgba(0,0,0,0.7);
-    white-space: pre-wrap;
-  }
-
-  .subtitle-text:empty {
-    display: none;
-  }
-
-  /* ─── CONTROLS OVERLAY ─── */
-  .controls-wrap {
-    position: absolute;
-    bottom: 0;
-    left: 0; right: 0;
-    padding: 0 20px 16px;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
-    z-index: 9;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-  }
-
-  .video-wrap.cursor-visible .controls-wrap,
-  .video-wrap.paused .controls-wrap {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* ─── PROGRESS BAR ─── */
-  .progress-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .time-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    min-width: 86px;
-  }
-  .time-label span { color: var(--text-dim); }
-
-  .progress-track {
-    flex: 1;
-    height: 4px;
-    background: rgba(255,255,255,0.12);
-    border-radius: 100px;
-    position: relative;
-    cursor: pointer;
-    transition: height 0.15s ease;
-  }
-
-  .progress-track:hover { height: 6px; }
-
-  .progress-buffer {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    background: rgba(255,255,255,0.15);
-    border-radius: 100px;
-    pointer-events: none;
-  }
-
-  .progress-fill {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    background: var(--accent);
-    border-radius: 100px;
-    pointer-events: none;
-  }
-
-  .progress-thumb {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent-glow);
-    pointer-events: none;
-    transition: transform 0.15s ease;
-  }
-
-  .progress-track:hover .progress-thumb { transform: translate(-50%, -50%) scale(1); }
-
-  /* Tooltip */
-  .progress-tooltip {
-    position: absolute;
-    bottom: 18px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--text);
-    font-size: 11px;
-    font-weight: 500;
-    padding: 4px 8px;
-    border-radius: 6px;
-    pointer-events: none;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.12s;
-  }
-
-  .progress-track:hover .progress-tooltip { opacity: 1; }
-
-  /* ─── CONTROL ROW ─── */
-  .control-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .ctrl-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(255,255,255,0.75);
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s, transform 0.1s;
-    flex-shrink: 0;
-  }
-
-  .ctrl-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
-  .ctrl-btn:active { transform: scale(0.9); }
-  .ctrl-btn.active { color: var(--accent); }
-
-  .play-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff !important;
-  }
-  .play-btn:hover { background: #9ecbfa; transform: scale(1.05); }
-
-  .spacer { flex: 1; }
-
-  /* ─── VOLUME ─── */
-  .volume-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .vol-track {
-    width: 72px;
-    height: 4px;
-    background: rgba(255,255,255,0.12);
-    border-radius: 100px;
-    position: relative;
-    cursor: pointer;
-    transition: height 0.15s;
-  }
-
-  .vol-track:hover { height: 6px; }
-
-  .vol-fill {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    background: rgba(255,255,255,0.7);
-    border-radius: 100px;
-  }
-
-  .vol-thumb {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-    background: #fff;
-    pointer-events: none;
-    transition: transform 0.15s;
-  }
-
-  .vol-track:hover .vol-thumb { transform: translate(-50%, -50%) scale(1); }
-
-  /* ─── SPEED MENU ─── */
-  .speed-wrap { position: relative; }
-
-  .speed-menu {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    right: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    min-width: 80px;
-    display: none;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    z-index: 20;
-  }
-
-  .speed-menu.open { display: block; }
-
-  .speed-item {
-    padding: 9px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: background 0.1s, color 0.1s;
-    text-align: center;
-  }
-
-  .speed-item:hover { background: var(--surface3); color: var(--text); }
-  .speed-item.active { color: var(--accent); background: var(--accent-dim); }
-
-  /* ─── SIDEBAR ─── */
-  .sidebar {
-    width: 280px;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
-  }
-
-  .sidebar.collapsed { width: 0; overflow: hidden; }
-
-  .sidebar-header {
-    padding: 0 20px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .sidebar-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-
-  .sidebar-body {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .sidebar-body::-webkit-scrollbar { width: 3px; }
-  .sidebar-body::-webkit-scrollbar-track { background: transparent; }
-  .sidebar-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px; }
-
-  /* ─── SIDEBAR SECTIONS ─── */
-  .info-block {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px;
-  }
-
-  .info-block-title {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-  }
-
-  .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 0;
-    font-size: 12px;
-  }
-
-  .info-key { color: var(--text-muted); }
-  .info-val { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
-
-  /* ─── FILE PICK BUTTON ─── */
-  .pick-btn {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px dashed var(--border2);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    padding: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: border-color var(--transition), color var(--transition), background var(--transition);
-  }
-
-  .pick-btn:hover {
-    border-color: rgba(200,255,0,0.3);
-    color: var(--accent);
-    background: var(--accent-dim);
-  }
-
-  /* ─── SUBTITLE SECTION ─── */
-  .sub-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .sub-indicator {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--text-dim);
-    flex-shrink: 0;
-  }
-
-  .sub-indicator.active { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
-
-  .sub-controls {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  .sub-ctrl-btn {
-    flex: 1;
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    padding: 8px 10px;
-    border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    transition: background var(--transition), color var(--transition);
-  }
-
-  .sub-ctrl-btn:hover { background: var(--surface2); color: var(--text); }
-  .sub-ctrl-btn.active { color: var(--accent); border-color: rgba(200,255,0,0.25); }
-
-  /* ─── DELAY CONTROL ─── */
-  .delay-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .delay-label { font-size: 12px; color: var(--text-muted); flex: 1; }
-
-  .delay-val {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--accent);
-    min-width: 44px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .delay-btn {
-    width: 28px;
-    height: 28px;
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    transition: background var(--transition), color var(--transition);
-    font-family: monospace;
-    line-height: 1;
-  }
-
-  .delay-btn:hover { background: var(--surface2); color: var(--text); }
-
-  /* ─── KEYBOARD SHORTCUTS HINT ─── */
-  .kbd-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-
-  .kbd-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .kbd {
-    background: var(--surface3);
-    border: 1px solid var(--border2);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--text-dim);
-    white-space: nowrap;
-  }
-
-  /* ─── TOAST ─── */
-  .toast {
-    position: fixed;
-    top: 62px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-8px);
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--text);
-    padding: 8px 16px;
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 500;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, transform 0.2s;
-    z-index: 100;
-    white-space: nowrap;
-    backdrop-filter: blur(20px);
-  }
-
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* ─── HIDDEN INPUTS ─── */
-  #file-input, #subtitle-input { display: none; }
-
-  /* ─── FULLSCREEN ADJUSTMENTS ─── */
-  :fullscreen .sidebar { display: none; }
-  :fullscreen .titlebar { display: none; }
-  :fullscreen .controls-wrap { padding: 0 28px 22px; }
-  :fullscreen .subtitle-overlay { bottom: 90px; }
-
-  /* ─── SCROLL for sidebar overflow ─── */
-  .sidebar-body { overflow-y: auto; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0b0c10;
+  --bg2: #0f1116;
+  --surface: #13151c;
+  --surface2: #191c26;
+  --surface3: #1e2230;
+  --border: rgba(148,163,210,0.08);
+  --border2: rgba(148,163,210,0.14);
+  --border3: rgba(148,163,210,0.22);
+  --text: #dde1f0;
+  --text-muted: rgba(180,187,215,0.55);
+  --text-dim: rgba(148,158,200,0.35);
+  --accent: #7eb8f7;
+  --accent2: #a78bfa;
+  --accent-dim: rgba(126,184,247,0.10);
+  --accent-glow: rgba(126,184,247,0.18);
+  --green: #6ee7b7;
+  --mono: 'Geist Mono', monospace;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'Geist', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── NOISE TEXTURE ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* ─── NAV ─── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 0 48px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(11,12,16,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+
+/* ── LOGO SLOT ──
+   Replace the SVG below with your own <img src="logo.png"> or custom SVG.
+   Current: Arch-style geometric diamond mark
+*/
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.logo-name {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta {
+  background: var(--accent);
+  color: #05090f !important;
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 13px !important;
+  transition: background 0.2s, transform 0.1s !important;
+}
+
+.nav-cta:hover { background: #9ecbfa !important; transform: translateY(-1px); }
+
+/* ─── HERO ─── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 48px 80px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Grid lines bg */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 100%);
+  pointer-events: none;
+}
+
+.hero-glow {
+  position: absolute;
+  width: 700px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(126,184,247,0.07) 0%, transparent 70%);
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 5px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s ease both;
+}
+
+.badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(110,231,183,0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(52px, 7vw, 92px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  max-width: 900px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-sub {
+  margin-top: 24px;
+  font-size: 17px;
+  color: var(--text-muted);
+  max-width: 500px;
+  font-weight: 300;
+  line-height: 1.7;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 44px;
+  align-items: center;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #05090f;
+  padding: 13px 26px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #9ecbfa;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(126,184,247,0.25);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 13px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+  border: 1px solid var(--border2);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border3);
+}
+
+/* ─── PLAYER PREVIEW MOCKUP ─── */
+.hero-preview {
+  margin-top: 72px;
+  width: 100%;
+  max-width: 860px;
+  animation: fadeUp 0.7s 0.4s ease both;
+  position: relative;
+  z-index: 1;
+}
+
+.preview-bar {
+  background: #13151c;
+  border: 1px solid var(--border2);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-dot { width: 10px; height: 10px; border-radius: 50%; }
+.preview-dot:nth-child(1) { background: #ff5f57; }
+.preview-dot:nth-child(2) { background: #ffbd2e; }
+.preview-dot:nth-child(3) { background: #28c840; }
+
+.preview-title {
+  margin-left: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.preview-screen {
+  background: #050608;
+  border: 1px solid var(--border2);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  aspect-ratio: 16/9;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fake video content */
+.preview-content {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #0d1117 0%, #111827 50%, #0d1117 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-play-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(126,184,247,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ringPulse 3s infinite;
+}
+
+@keyframes ringPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(126,184,247,0.2); }
+  50% { box-shadow: 0 0 0 16px rgba(126,184,247,0); }
+}
+
+.preview-play-ring svg { color: var(--accent); margin-left: 4px; }
+
+/* fake subtitle line */
+.preview-sub {
+  position: absolute;
+  bottom: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.92);
+  white-space: nowrap;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7);
+  font-family: var(--sans);
+}
+
+/* fake controls bar */
+.preview-controls {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 46px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-progress {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100px;
+  position: relative;
+}
+
+.preview-progress-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 38%;
+  background: var(--accent);
+  border-radius: 100px;
+}
+
+.preview-time {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+}
+
+.preview-icons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.preview-icon-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+
+/* ─── SECTION BASE ─── */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.section-label::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+/* ─── FEATURES ─── */
+.features {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+}
+
+.features-header {
+  margin-bottom: 64px;
+}
+
+.features-header h2 {
+  font-family: var(--serif);
+  font-size: clamp(36px, 4vw, 54px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  max-width: 480px;
+}
+
+.features-header h2 em { font-style: italic; color: var(--text-muted); }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.feature-card {
+  background: var(--bg2);
+  padding: 32px 28px;
+  transition: background 0.2s;
+}
+
+.feature-card:hover { background: var(--surface); }
+
+.feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(126,184,247,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+
+.feature-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.feature-card p {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* ─── HOW IT WORKS ─── */
+.how {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+}
+
+.how-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.how h2 {
+  font-family: var(--serif);
+  font-size: clamp(34px, 3.5vw, 50px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin-bottom: 20px;
+}
+
+.how-desc {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.75;
+  font-weight: 300;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.step {
+  display: flex;
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.step:last-child { border-bottom: none; }
+
+.step-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 24px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.step-body h4 {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.step-body p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* ─── CUSTOMIZE / CODE SECTION ─── */
+.customize {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+}
+
+.customize-header {
+  margin-bottom: 56px;
+  max-width: 560px;
+}
+
+.customize-header h2 {
+  font-family: var(--serif);
+  font-size: clamp(34px, 3.5vw, 50px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.customize-header p {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+.code-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.code-tab-bar {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  gap: 4px;
+}
+
+.code-tab {
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.code-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.code-tab:hover:not(.active) { color: var(--text-muted); }
+
+.code-panels { background: #0d0f14; }
+
+.code-panel { display: none; padding: 28px 32px; }
+.code-panel.active { display: block; }
+
+pre {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c9d1e8;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.c-comment { color: rgba(148,163,184,0.45); }
+.c-prop { color: #7eb8f7; }
+.c-val { color: #6ee7b7; }
+.c-str { color: #f9a8d4; }
+.c-num { color: #fbbf24; }
+.c-key { color: #a78bfa; }
+.c-fn { color: #fb923c; }
+
+/* ─── KEYBOARD SHORTCUTS ─── */
+.shortcuts {
+  padding: 100px 0;
+  border-top: 1px solid var(--border);
+}
+
+.shortcuts h2 {
+  font-family: var(--serif);
+  font-size: clamp(32px, 3vw, 46px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  margin-bottom: 48px;
+}
+
+.kbd-table {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.kbd-row {
+  background: var(--bg2);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: background 0.15s;
+}
+
+.kbd-row:hover { background: var(--surface); }
+
+kbd {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface3);
+  border: 1px solid var(--border3);
+  border-radius: 5px;
+  padding: 3px 9px;
+  color: var(--accent);
+  white-space: nowrap;
+  min-width: 52px;
+  text-align: center;
+  display: inline-block;
+  box-shadow: 0 2px 0 var(--border3);
+}
+
+.kbd-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ─── CTA STRIP ─── */
+.cta-strip {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.cta-strip h2 {
+  font-family: var(--serif);
+  font-size: clamp(38px, 5vw, 68px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+
+.cta-strip h2 em { font-style: italic; color: var(--accent); }
+
+.cta-strip p {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-weight: 300;
+  margin-bottom: 40px;
+}
+
+.cta-strip .btn-primary { font-size: 15px; padding: 15px 32px; }
+
+/* ─── FOOTER ─── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.footer-right {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  .container { padding: 0 24px; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .how-inner { grid-template-columns: 1fr; gap: 48px; }
+  .kbd-table { grid-template-columns: repeat(2, 1fr); }
+  footer { padding: 24px; flex-direction: column; gap: 12px; }
+}
+
+@media (max-width: 600px) {
+  .features-grid { grid-template-columns: 1fr; }
+  .kbd-table { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; width: 100%; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+}
 </style>
 </head>
 <body>
 
-<div class="app">
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <!--
+      ╔══════════════════════════════════════════════╗
+      ║  LOGO SLOT — replace the SVG below           ║
+      ║  with: <img src="your-logo.png" width="28">  ║
+      ╚══════════════════════════════════════════════╝
+    -->
+ <img src="fav.png" width="32">
+    <span class="logo-name">ArchPlayer</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#guide">Guide</a></li>
+    <li><a href="#shortcuts">Shortcuts</a></li>
+    <li><a href="https://github.com/" target="_blank">GitHub</a></li>
+    <li><a href="ArchPlayer.html" download class="nav-cta">Download</a></li>
+  </ul>
+</nav>
 
-  <!-- TITLEBAR -->
-  <div class="titlebar">
-    <div class="logo">
-      <div class="logo-dot"></div>
-      ArchPlayer
-    </div>
-    <div class="titlebar-right">
-      <button class="icon-btn" id="toggle-sidebar" title="Toggle panel">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/>
-        </svg>
-      </button>
-    </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+
+  <div class="hero-badge">
+    <div class="badge-dot"></div>
+    Open source · Single file · No install
   </div>
 
-  <!-- MAIN -->
-  <div class="main">
+  <h1>A video player built for <em>clarity</em></h1>
 
-    <!-- VIDEO STAGE -->
-    <div class="stage">
-      <div class="video-wrap paused" id="video-wrap">
+  <p class="hero-sub">
+    Drop a file. Hit play. ArchPlayer runs entirely in your browser —
+    native quality, zero compression, full subtitle support.
+  </p>
 
-        <!-- Drop Zone -->
-        <div class="drop-zone" id="drop-zone">
-          <div class="drop-ring">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-          </div>
-          <div class="drop-label">Drop a video file</div>
-          <div class="drop-sub">or click to browse</div>
-          <button class="open-btn" id="open-btn">Open file</button>
-        </div>
+  <div class="hero-actions">
+    <a href="ArchPlayer.html" download class="btn-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download ArchPlayer
+    </a>
+    <a href="https://github.com/" target="_blank" class="btn-secondary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+      </svg>
+      View on GitHub
+    </a>
+  </div>
 
-        <video id="video" preload="auto"></video>
-
-        <!-- Subtitle overlay -->
-        <div class="subtitle-overlay" id="sub-overlay">
-          <span class="subtitle-text" id="sub-text"></span>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls-wrap" id="controls-wrap">
-
-          <div class="progress-area">
-            <div class="time-label" id="time-label">0:00 <span>/ 0:00</span></div>
-            <div class="progress-track" id="progress-track">
-              <div class="progress-buffer" id="progress-buffer"></div>
-              <div class="progress-fill" id="progress-fill"></div>
-              <div class="progress-thumb" id="progress-thumb"></div>
-              <div class="progress-tooltip" id="progress-tooltip">0:00</div>
-            </div>
-          </div>
-
-          <div class="control-row">
-            <!-- Rewind -->
-            <button class="ctrl-btn" id="rewind-btn" title="Rewind 10s">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.74"/>
-              </svg>
-            </button>
-
-            <!-- Play/Pause -->
-            <button class="ctrl-btn play-btn" id="play-btn" title="Play/Pause">
-              <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
-            </button>
-
-            <!-- Forward -->
-            <button class="ctrl-btn" id="forward-btn" title="Forward 10s">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.74"/>
-              </svg>
-            </button>
-
-            <!-- Volume -->
-            <div class="volume-group">
-              <button class="ctrl-btn" id="mute-btn" title="Mute">
-                <svg id="vol-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-                </svg>
-              </button>
-              <div class="vol-track" id="vol-track">
-                <div class="vol-fill" id="vol-fill" style="width:100%"></div>
-                <div class="vol-thumb" id="vol-thumb" style="left:100%"></div>
-              </div>
-            </div>
-
-            <div class="spacer"></div>
-
-            <!-- Speed -->
-            <div class="speed-wrap">
-              <button class="ctrl-btn" id="speed-btn" title="Playback speed" style="font-size:12px;font-weight:600;width:auto;padding:0 10px;letter-spacing:-0.01em;">1x</button>
-              <div class="speed-menu" id="speed-menu">
-                <div class="speed-item" data-val="0.25">0.25x</div>
-                <div class="speed-item" data-val="0.5">0.5x</div>
-                <div class="speed-item" data-val="0.75">0.75x</div>
-                <div class="speed-item active" data-val="1">1x</div>
-                <div class="speed-item" data-val="1.25">1.25x</div>
-                <div class="speed-item" data-val="1.5">1.5x</div>
-                <div class="speed-item" data-val="2">2x</div>
-              </div>
-            </div>
-
-            <!-- PiP -->
-            <button class="ctrl-btn" id="pip-btn" title="Picture in Picture">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="10" width="9" height="6" rx="1"/>
-              </svg>
-            </button>
-
-            <!-- Fullscreen -->
-            <button class="ctrl-btn" id="fs-btn" title="Fullscreen">
-              <svg id="fs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-                <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+  <!-- Mockup -->
+  <div class="hero-preview">
+    <div class="preview-bar">
+      <div class="preview-dot"></div>
+      <div class="preview-dot"></div>
+      <div class="preview-dot"></div>
+      <span class="preview-title">ArchPlayer.html</span>
     </div>
-
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-
-      <!-- File Info -->
-      <div class="sidebar-header">
-        <span class="sidebar-title">Info</span>
-      </div>
-
-      <div class="sidebar-body">
-
-        <!-- File pick -->
-        <button class="pick-btn" id="pick-video">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    <div class="preview-screen">
+      <div class="preview-content">
+        <div class="preview-play-ring">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
-          Open video file
-        </button>
+        </div>
+      </div>
+      <div class="preview-sub">The night is dark and full of terrors.</div>
+      <div class="preview-controls">
+        <div class="preview-icons">
+          <div class="preview-icon-dot"></div>
+          <div class="preview-icon-dot"></div>
+          <div class="preview-icon-dot"></div>
+        </div>
+        <div class="preview-progress">
+          <div class="preview-progress-fill"></div>
+        </div>
+        <span class="preview-time">24:18 / 48:02</span>
+        <div class="preview-icons">
+          <div class="preview-icon-dot"></div>
+          <div class="preview-icon-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        <!-- File info -->
-        <div class="info-block" id="file-info-block">
-          <div class="info-block-title">File</div>
-          <div class="info-row"><span class="info-key">Name</span><span class="info-val" id="info-name">—</span></div>
-          <div class="info-row"><span class="info-key">Size</span><span class="info-val" id="info-size">—</span></div>
-          <div class="info-row"><span class="info-key">Type</span><span class="info-val" id="info-type">—</span></div>
-          <div class="info-row"><span class="info-key">Resolution</span><span class="info-val" id="info-res">—</span></div>
-          <div class="info-row"><span class="info-key">Duration</span><span class="info-val" id="info-dur">—</span></div>
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header reveal">
+      <div class="section-label">Features</div>
+      <h2>Everything you need, <em>nothing you don't</em></h2>
+    </div>
+
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+        </div>
+        <h3>Native Quality Playback</h3>
+        <p>Your file is decoded directly by the browser — no server, no transcoding, no quality loss. What you drop is what you see.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="15" rx="2"/><path d="M8 2l4 4 4-4"/>
+          </svg>
+        </div>
+        <h3>External Subtitle Support</h3>
+        <p>Load any .srt or .vtt file. Adjust sync delay in real time, toggle on/off instantly. Clean text-shadow rendering — no ugly boxes.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><path d="M20.49 9A9 9 0 1 1 5.64 5.64"/>
+          </svg>
+        </div>
+        <h3>Playback Speed Control</h3>
+        <p>0.25x to 2x. Switch on the fly without losing your position. Ideal for lectures, commentary, or rewatching favourite scenes.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="10" width="9" height="6" rx="1"/>
+          </svg>
+        </div>
+        <h3>Picture in Picture</h3>
+        <p>Pop the video out into a floating window with one click. Browse, code, or work while keeping your video visible.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </div>
+        <h3>True Fullscreen</h3>
+        <p>Full native fullscreen with auto-hiding controls. Mouse moves in, controls appear. Mouse leaves, they vanish. Zero distraction.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <h3>Single HTML File</h3>
+        <p>No npm. No install. No dependencies. Open the file in any browser and it works. That's the whole story.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="how-inner">
+      <div class="reveal">
+        <div class="section-label">How it works</div>
+        <h2>Dead simple by design</h2>
+        <p class="how-desc">
+          ArchPlayer is a single self-contained HTML file. It uses the browser's
+          native video decoder — which means it supports whatever your browser supports:
+          MP4, WebM, MKV (Chromium), AVI, and more. No backend. No accounts.
+          Everything stays on your machine.
+        </p>
+      </div>
+
+      <div class="steps reveal">
+        <div class="step">
+          <span class="step-num">01</span>
+          <div class="step-body">
+            <h4>Download the file</h4>
+            <p>One click. You get a single <code style="font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--accent-dim);padding:1px 6px;border-radius:4px">ArchPlayer.html</code> file. Nothing else.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <div class="step-body">
+            <h4>Open in your browser</h4>
+            <p>Double-click it, or drag it into Chrome, Firefox, or any modern browser. No server needed.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <div class="step-body">
+            <h4>Drop your video</h4>
+            <p>Drag a video file onto the player, or use the Open button. Playback starts immediately at full quality.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">04</span>
+          <div class="step-body">
+            <h4>Load subtitles (optional)</h4>
+            <p>Drag in a .srt or .vtt file, or use the subtitle panel. Adjust delay offset if needed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CUSTOMIZE / CODE GUIDE -->
+<section class="customize" id="guide">
+  <div class="container">
+    <div class="customize-header reveal">
+      <div class="section-label">Customization guide</div>
+      <h2>Make it yours</h2>
+      <p>
+        Open <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 7px;border-radius:4px">ArchPlayer.html</code> in any text editor.
+        All visual settings live inside the <code style="font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-dim);padding:2px 7px;border-radius:4px">:root</code> CSS block
+        and a few clearly commented sections below it.
+      </p>
+    </div>
+
+    <div class="code-tabs reveal">
+      <div class="code-tab-bar">
+        <button class="code-tab active" data-tab="subtitles">Subtitles</button>
+        <button class="code-tab" data-tab="colors">Colors</button>
+        <button class="code-tab" data-tab="controls">Controls</button>
+        <button class="code-tab" data-tab="speed">Default Speed</button>
+      </div>
+
+      <div class="code-panels">
+
+        <!-- SUBTITLES TAB -->
+        <div class="code-panel active" data-panel="subtitles">
+<pre><span class="c-comment">/* ─── SUBTITLE TEXT ───────────────────────────────────
+   Find the .subtitle-text rule in the &lt;style&gt; block.
+   Tweak the values below to your preference.
+─────────────────────────────────────────────────────── */</span>
+
+<span class="c-prop">.subtitle-text</span> {
+  <span class="c-key">font-size</span>: <span class="c-num">22px</span>;       <span class="c-comment">/* increase for bigger subtitles, e.g. 26px, 30px */</span>
+  <span class="c-key">font-weight</span>: <span class="c-num">500</span>;     <span class="c-comment">/* 300 = light, 400 = normal, 600 = bold */</span>
+  <span class="c-key">color</span>: <span class="c-str">#ffffff</span>;       <span class="c-comment">/* subtitle text colour */</span>
+  <span class="c-key">line-height</span>: <span class="c-num">1.65</span>;   <span class="c-comment">/* spacing between subtitle lines */</span>
+  <span class="c-key">letter-spacing</span>: <span class="c-num">0.01em</span>;
+  <span class="c-comment">/* Shadow depth — increase blur values for more contrast */</span>
+  <span class="c-key">text-shadow</span>:
+    <span class="c-num">0 1px 4px</span> <span class="c-fn">rgba</span>(<span class="c-num">0,0,0,0.95</span>),
+    <span class="c-num">0 2px 14px</span> <span class="c-fn">rgba</span>(<span class="c-num">0,0,0,0.85</span>);
+}
+
+<span class="c-comment">/* Subtitle vertical position — distance from bottom of video */</span>
+<span class="c-prop">.subtitle-overlay</span> {
+  <span class="c-key">bottom</span>: <span class="c-num">80px</span>;  <span class="c-comment">/* increase to move subtitles higher */</span>
+  <span class="c-key">max-width</span>: <span class="c-num">80%</span>; <span class="c-comment">/* max line width before wrapping */</span>
+}</pre>
         </div>
 
-        <!-- Subtitles -->
-        <div class="info-block">
-          <div class="info-block-title">Subtitles</div>
+        <!-- COLORS TAB -->
+        <div class="code-panel" data-panel="colors">
+<pre><span class="c-comment">/* ─── COLOUR PALETTE ──────────────────────────────────
+   Find the :root block at the very top of the &lt;style&gt;.
+   Change any value to retheme the entire player.
+─────────────────────────────────────────────────────── */</span>
 
-          <div class="sub-status">
-            <div class="sub-indicator" id="sub-indicator"></div>
-            <span id="sub-status-text">No subtitle loaded</span>
-          </div>
+<span class="c-prop">:root</span> {
+  <span class="c-comment">/* Backgrounds */</span>
+  <span class="c-key">--bg</span>:        <span class="c-str">#0e0f11</span>;   <span class="c-comment">/* main dark background */</span>
+  <span class="c-key">--surface</span>:   <span class="c-str">#13141a</span>;   <span class="c-comment">/* titlebar + sidebar background */</span>
+  <span class="c-key">--surface2</span>:  <span class="c-str">#1a1b22</span>;   <span class="c-comment">/* card / block backgrounds */</span>
 
-          <div class="sub-controls">
-            <button class="pick-btn sub-ctrl-btn" id="pick-sub">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              Load .srt
-            </button>
-            <button class="sub-ctrl-btn" id="toggle-sub">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="7" width="20" height="15" rx="2"/><path d="M8 2l4 4 4-4"/>
-              </svg>
-              Toggle
-            </button>
-          </div>
+  <span class="c-comment">/* Accent — used for progress bar, play button, active states */</span>
+  <span class="c-key">--accent</span>:    <span class="c-str">#7eb8f7</span>;   <span class="c-comment">/* try #c084fc (purple), #34d399 (green) */</span>
+  <span class="c-key">--accent-dim</span>: <span class="c-fn">rgba</span>(<span class="c-num">126,184,247,0.12</span>);
 
-          <div class="delay-row">
-            <span class="delay-label">Delay offset</span>
-            <button class="delay-btn" id="delay-minus">-</button>
-            <div class="delay-val" id="delay-val">0.0s</div>
-            <button class="delay-btn" id="delay-plus">+</button>
-          </div>
+  <span class="c-comment">/* Text */</span>
+  <span class="c-key">--text</span>:       <span class="c-str">#e8e9f0</span>;  <span class="c-comment">/* primary text */</span>
+  <span class="c-key">--text-muted</span>: <span class="c-fn">rgba</span>(<span class="c-num">200,202,220,0.5</span>); <span class="c-comment">/* secondary/dim text */</span>
+}</pre>
         </div>
 
-        <!-- Shortcuts -->
-        <div class="info-block">
-          <div class="info-block-title">Shortcuts</div>
-          <div class="kbd-grid">
-            <div class="kbd-item"><kbd class="kbd">Space</kbd> Play/Pause</div>
-            <div class="kbd-item"><kbd class="kbd">F</kbd> Fullscreen</div>
-            <div class="kbd-item"><kbd class="kbd">←</kbd> Back 10s</div>
-            <div class="kbd-item"><kbd class="kbd">→</kbd> Forward 10s</div>
-            <div class="kbd-item"><kbd class="kbd">M</kbd> Mute</div>
-            <div class="kbd-item"><kbd class="kbd">↑/↓</kbd> Volume</div>
-            <div class="kbd-item"><kbd class="kbd">S</kbd> Sub toggle</div>
-            <div class="kbd-item"><kbd class="kbd">P</kbd> Pip</div>
-          </div>
+        <!-- CONTROLS TAB -->
+        <div class="code-panel" data-panel="controls">
+<pre><span class="c-comment">/* ─── CONTROL BUTTON SIZES ────────────────────────────
+   Find these rules in the &lt;style&gt; block.
+─────────────────────────────────────────────────────── */</span>
+
+<span class="c-comment">/* All icon buttons in the control bar */</span>
+<span class="c-prop">.ctrl-btn</span> {
+  <span class="c-key">width</span>:  <span class="c-num">36px</span>;   <span class="c-comment">/* button hitbox size */</span>
+  <span class="c-key">height</span>: <span class="c-num">36px</span>;
+}
+
+<span class="c-comment">/* The main play/pause button */</span>
+<span class="c-prop">.play-btn</span> {
+  <span class="c-key">width</span>:  <span class="c-num">40px</span>;   <span class="c-comment">/* make larger: 48px, 52px */</span>
+  <span class="c-key">height</span>: <span class="c-num">40px</span>;
+}
+
+<span class="c-comment">/* Progress bar thickness */</span>
+<span class="c-prop">.progress-track</span> {
+  <span class="c-key">height</span>: <span class="c-num">4px</span>;    <span class="c-comment">/* resting thickness */</span>
+}
+<span class="c-prop">.progress-track:hover</span> {
+  <span class="c-key">height</span>: <span class="c-num">6px</span>;    <span class="c-comment">/* hover thickness */</span>
+}</pre>
+        </div>
+
+        <!-- SPEED TAB -->
+        <div class="code-panel" data-panel="speed">
+<pre><span class="c-comment">/* ─── DEFAULT PLAYBACK SPEED ──────────────────────────
+   Find the speed-item elements in the HTML.
+   Change which item has class="active" to set the default.
+   Then set the matching video.playbackRate in the JS.
+─────────────────────────────────────────────────────── */</span>
+
+<span class="c-comment">&lt;!-- In HTML: mark your preferred default as active --&gt;</span>
+<span class="c-str">&lt;div</span> <span class="c-key">class</span>=<span class="c-str">"speed-item"</span>     <span class="c-key">data-val</span>=<span class="c-str">"0.75"</span>&gt;0.75x&lt;/div&gt;
+<span class="c-str">&lt;div</span> <span class="c-key">class</span>=<span class="c-str">"speed-item active"</span> <span class="c-key">data-val</span>=<span class="c-str">"1"</span>&gt;1x&lt;/div&gt;  <span class="c-comment">&lt;!-- default --&gt;</span>
+<span class="c-str">&lt;div</span> <span class="c-key">class</span>=<span class="c-str">"speed-item"</span>     <span class="c-key">data-val</span>=<span class="c-str">"1.25"</span>&gt;1.25x&lt;/div&gt;
+
+<span class="c-comment">/* In JS: find speedBtn and set initial text + rate */</span>
+<span class="c-comment">// Change "1x" to "1.25x" and add this line:</span>
+<span class="c-fn">video</span>.<span class="c-key">playbackRate</span> = <span class="c-num">1.25</span>;
+<span class="c-fn">speedBtn</span>.<span class="c-key">textContent</span> = <span class="c-str">'1.25x'</span>;</pre>
         </div>
 
       </div>
     </div>
-
   </div>
-</div>
+</section>
 
-<!-- Hidden inputs -->
-<input type="file" id="file-input" accept="video/*">
-<input type="file" id="subtitle-input" accept=".srt,.vtt,.sub">
+<!-- KEYBOARD SHORTCUTS -->
+<section class="shortcuts" id="shortcuts">
+  <div class="container">
+    <div class="section-label reveal">Keyboard</div>
+    <h2 class="reveal">Every shortcut, at a glance</h2>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+    <div class="kbd-table reveal">
+      <div class="kbd-row"><kbd>Space</kbd><span class="kbd-desc">Play / Pause</span></div>
+      <div class="kbd-row"><kbd>F</kbd><span class="kbd-desc">Toggle fullscreen</span></div>
+      <div class="kbd-row"><kbd>&#8592;</kbd><span class="kbd-desc">Rewind 10 seconds</span></div>
+      <div class="kbd-row"><kbd>&#8594;</kbd><span class="kbd-desc">Forward 10 seconds</span></div>
+      <div class="kbd-row"><kbd>&#8593; / &#8595;</kbd><span class="kbd-desc">Volume up / down</span></div>
+      <div class="kbd-row"><kbd>M</kbd><span class="kbd-desc">Toggle mute</span></div>
+      <div class="kbd-row"><kbd>S</kbd><span class="kbd-desc">Toggle subtitles</span></div>
+      <div class="kbd-row"><kbd>P</kbd><span class="kbd-desc">Picture in Picture</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-strip">
+  <div class="container">
+    <h2 class="reveal">Just <em>open</em> and play.</h2>
+    <p class="reveal">No install. No account. No cloud. One file, everything included.</p>
+    <div class="reveal" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="ArchPlayer.html" download class="btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download ArchPlayer.html
+      </a>
+      <a href="https://github.com/" target="_blank" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        View source on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <svg width="20" height="20" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="14,2 26,22 2,22" fill="none" stroke="rgba(126,184,247,0.4)" stroke-width="1.5" stroke-linejoin="round"/>
+      <polygon points="14,8 21,20 7,20" fill="rgba(126,184,247,0.08)" stroke="rgba(126,184,247,0.25)" stroke-width="1" stroke-linejoin="round"/>
+      <circle cx="14" cy="14" r="2" fill="rgba(126,184,247,0.5)"/>
+    </svg>
+    <span class="footer-name">ArchPlayer</span>
+  </div>
+  <span class="footer-right">Open source. No rights reserved.</span>
+</footer>
 
 <script>
-const video       = document.getElementById('video');
-const videoWrap   = document.getElementById('video-wrap');
-const dropZone    = document.getElementById('drop-zone');
-const controls   = document.getElementById('controls-wrap');
+// ─── SCROLL REVEAL ───────────────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+revealEls.forEach(el => observer.observe(el));
 
-const playBtn     = document.getElementById('play-btn');
-const playIcon    = document.getElementById('play-icon');
-const rewindBtn   = document.getElementById('rewind-btn');
-const forwardBtn  = document.getElementById('forward-btn');
-const muteBtn     = document.getElementById('mute-btn');
-const volIcon     = document.getElementById('vol-icon');
-const volTrack    = document.getElementById('vol-track');
-const volFill     = document.getElementById('vol-fill');
-const volThumb    = document.getElementById('vol-thumb');
-const progressTrack = document.getElementById('progress-track');
-const progressFill  = document.getElementById('progress-fill');
-const progressBuffer = document.getElementById('progress-buffer');
-const progressThumb = document.getElementById('progress-thumb');
-const progressTooltip = document.getElementById('progress-tooltip');
-const timeLabel   = document.getElementById('time-label');
-const speedBtn    = document.getElementById('speed-btn');
-const speedMenu   = document.getElementById('speed-menu');
-const pipBtn      = document.getElementById('pip-btn');
-const fsBtn       = document.getElementById('fs-btn');
-const fsIcon      = document.getElementById('fs-icon');
+// ─── CODE TABS ───────────────────────────────────────
+const tabs = document.querySelectorAll('.code-tab');
+const panels = document.querySelectorAll('.code-panel');
 
-const fileInput   = document.getElementById('file-input');
-const subInput    = document.getElementById('subtitle-input');
-const openBtn     = document.getElementById('open-btn');
-const pickVideo   = document.getElementById('pick-video');
-const pickSub     = document.getElementById('pick-sub');
-const toggleSub   = document.getElementById('toggle-sub');
-const toggleSidebar = document.getElementById('toggle-sidebar');
-const sidebar     = document.getElementById('sidebar');
-const toast       = document.getElementById('toast');
-
-const subOverlay  = document.getElementById('sub-overlay');
-const subText     = document.getElementById('sub-text');
-const subIndicator= document.getElementById('sub-indicator');
-const subStatusText=document.getElementById('sub-status-text');
-const delayVal    = document.getElementById('delay-val');
-const delayMinus  = document.getElementById('delay-minus');
-const delayPlus   = document.getElementById('delay-plus');
-
-const infoName    = document.getElementById('info-name');
-const infoSize    = document.getElementById('info-size');
-const infoType    = document.getElementById('info-type');
-const infoRes     = document.getElementById('info-res');
-const infoDur     = document.getElementById('info-dur');
-
-// ─── STATE ───────────────────────────────────────────
-let subtitles      = [];
-let subtitleEnabled = true;
-let subtitleDelay  = 0;
-let currentSubUrl  = null;
-let mouseTimer     = null;
-let isDraggingProgress = false;
-let isDraggingVol  = false;
-let hasFile        = false;
-
-// ─── TOAST ───────────────────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
-}
-
-// ─── FORMATTING ──────────────────────────────────────
-function fmt(s) {
-  if (!isFinite(s)) return '—';
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
-  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-               : `${m}:${String(sec).padStart(2,'0')}`;
-}
-
-function fmtSize(b) {
-  if (b > 1e9) return (b/1e9).toFixed(1) + ' GB';
-  if (b > 1e6) return (b/1e6).toFixed(1) + ' MB';
-  return (b/1e3).toFixed(0) + ' KB';
-}
-
-// ─── FILE OPEN ───────────────────────────────────────
-function loadVideo(file) {
-  if (!file || !file.type.startsWith('video/')) { showToast('Not a video file'); return; }
-  const url = URL.createObjectURL(file);
-  video.src = url;
-  video.load();
-
-  hasFile = true;
-  dropZone.classList.add('hidden');
-  videoWrap.classList.remove('paused');
-  video.play().catch(()=>{});
-
-  // sidebar info
-  infoName.textContent = file.name.length > 22 ? file.name.slice(0,20)+'…' : file.name;
-  infoSize.textContent = fmtSize(file.size);
-  infoType.textContent = file.type.split('/')[1]?.toUpperCase() || '—';
-  infoRes.textContent  = '—';
-
-  video.onloadedmetadata = () => {
-    infoRes.textContent = video.videoWidth ? `${video.videoWidth}x${video.videoHeight}` : '—';
-    infoDur.textContent = fmt(video.duration);
-  };
-}
-
-openBtn.onclick = () => fileInput.click();
-pickVideo.onclick = () => fileInput.click();
-fileInput.onchange = e => loadVideo(e.target.files[0]);
-
-// ─── DRAG & DROP ─────────────────────────────────────
-document.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-document.addEventListener('dragleave', e => { if (!e.relatedTarget) dropZone.classList.remove('drag-over'); });
-document.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file?.type.startsWith('video/')) loadVideo(file);
-  else if (file?.name.endsWith('.srt') || file?.name.endsWith('.vtt')) loadSubFile(file);
-  else showToast('Unsupported file type');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.tab;
+    tabs.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`[data-panel="${target}"]`).classList.add('active');
+  });
 });
 
-// ─── PLAY/PAUSE ──────────────────────────────────────
-function togglePlay() {
-  if (!hasFile) return;
-  video.paused ? video.play() : video.pause();
-}
-
-playBtn.onclick = togglePlay;
-
-video.addEventListener('play', () => {
-  playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-  videoWrap.classList.remove('paused');
+// ─── NAV ACTIVE SCROLL ───────────────────────────────
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if (window.scrollY > 20) nav.style.borderBottomColor = 'rgba(148,163,210,0.12)';
+  else nav.style.borderBottomColor = '';
 });
-
-video.addEventListener('pause', () => {
-  playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-  videoWrap.classList.add('paused');
-});
-
-video.addEventListener('ended', () => {
-  playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-  videoWrap.classList.add('paused');
-});
-
-videoWrap.addEventListener('dblclick', togglePlay);
-
-// ─── SEEK ────────────────────────────────────────────
-function seekTo(frac) {
-  if (isFinite(video.duration)) video.currentTime = frac * video.duration;
-}
-
-function getProgressFrac(e) {
-  const rect = progressTrack.getBoundingClientRect();
-  return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-}
-
-progressTrack.addEventListener('mousedown', e => {
-  isDraggingProgress = true;
-  const f = getProgressFrac(e);
-  seekTo(f);
-});
-
-progressTrack.addEventListener('mousemove', e => {
-  const f = getProgressFrac(e);
-  const px = f * progressTrack.offsetWidth;
-  progressTooltip.style.left = px + 'px';
-  if (isFinite(video.duration)) progressTooltip.textContent = fmt(f * video.duration);
-  if (isDraggingProgress) seekTo(f);
-});
-
-document.addEventListener('mouseup', () => { isDraggingProgress = false; isDraggingVol = false; });
-document.addEventListener('mousemove', e => {
-  if (isDraggingProgress) { const f = getProgressFrac(e); seekTo(f); }
-  if (isDraggingVol) updateVolFromEvent(e);
-});
-
-video.addEventListener('timeupdate', () => {
-  if (!video.duration) return;
-  const f = video.currentTime / video.duration;
-  progressFill.style.width = (f * 100) + '%';
-  progressThumb.style.left = (f * 100) + '%';
-  timeLabel.innerHTML = `${fmt(video.currentTime)} <span>/ ${fmt(video.duration)}</span>`;
-  updateSubtitle();
-});
-
-video.addEventListener('progress', () => {
-  if (video.duration && video.buffered.length) {
-    const buf = video.buffered.end(video.buffered.length - 1) / video.duration;
-    progressBuffer.style.width = (buf * 100) + '%';
-  }
-});
-
-rewindBtn.onclick  = () => { if (hasFile) { video.currentTime = Math.max(0, video.currentTime - 10); showToast('- 10s'); } };
-forwardBtn.onclick = () => { if (hasFile) { video.currentTime = Math.min(video.duration, video.currentTime + 10); showToast('+ 10s'); } };
-
-// ─── VOLUME ──────────────────────────────────────────
-function setVolume(v) {
-  v = Math.min(1, Math.max(0, v));
-  video.volume = v;
-  video.muted = (v === 0);
-  volFill.style.width = (v * 100) + '%';
-  volThumb.style.left = (v * 100) + '%';
-  updateVolIcon(v);
-}
-
-function updateVolIcon(v) {
-  if (video.muted || v === 0) {
-    volIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
-  } else if (v < 0.5) {
-    volIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
-  } else {
-    volIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
-  }
-}
-
-muteBtn.onclick = () => {
-  video.muted = !video.muted;
-  updateVolIcon(video.muted ? 0 : video.volume);
-};
-
-function getVolFrac(e) {
-  const rect = volTrack.getBoundingClientRect();
-  return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-}
-
-function updateVolFromEvent(e) { setVolume(getVolFrac(e)); }
-
-volTrack.addEventListener('mousedown', e => { isDraggingVol = true; updateVolFromEvent(e); });
-volTrack.addEventListener('mousemove', e => { if (isDraggingVol) updateVolFromEvent(e); });
-setVolume(1);
-
-// ─── SPEED ───────────────────────────────────────────
-speedBtn.onclick = e => { speedMenu.classList.toggle('open'); e.stopPropagation(); };
-document.addEventListener('click', () => speedMenu.classList.remove('open'));
-
-speedMenu.querySelectorAll('.speed-item').forEach(item => {
-  item.onclick = e => {
-    const v = parseFloat(item.dataset.val);
-    video.playbackRate = v;
-    speedBtn.textContent = v + 'x';
-    speedMenu.querySelectorAll('.speed-item').forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
-    speedMenu.classList.remove('open');
-    showToast('Speed: ' + v + 'x');
-    e.stopPropagation();
-  };
-});
-
-// ─── PiP ─────────────────────────────────────────────
-pipBtn.onclick = () => {
-  if (document.pictureInPictureElement) document.exitPictureInPicture();
-  else if (video.requestPictureInPicture) video.requestPictureInPicture().catch(()=>showToast('PiP not supported'));
-};
-
-// ─── FULLSCREEN ──────────────────────────────────────
-fsBtn.onclick = () => {
-  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-  else document.exitFullscreen();
-};
-
-document.addEventListener('fullscreenchange', () => {
-  const fs = !!document.fullscreenElement;
-  fsIcon.innerHTML = fs
-    ? '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="17" y2="7"/><line x1="3" y1="21" x2="10" y2="14"/>'
-    : '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
-});
-
-// ─── MOUSE HIDE ──────────────────────────────────────
-videoWrap.addEventListener('mousemove', () => {
-  videoWrap.classList.add('cursor-visible');
-  clearTimeout(mouseTimer);
-  mouseTimer = setTimeout(() => {
-    if (!video.paused) videoWrap.classList.remove('cursor-visible');
-  }, 2500);
-});
-
-videoWrap.addEventListener('mouseleave', () => {
-  videoWrap.classList.remove('cursor-visible');
-  clearTimeout(mouseTimer);
-});
-
-// ─── KEYBOARD ────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
-  switch(e.code) {
-    case 'Space': e.preventDefault(); if (hasFile) togglePlay(); break;
-    case 'KeyF': fsBtn.onclick(); break;
-    case 'KeyM': muteBtn.click(); break;
-    case 'KeyP': pipBtn.click(); break;
-    case 'KeyS': toggleSub.click(); break;
-    case 'ArrowLeft': e.preventDefault(); if (hasFile) { video.currentTime = Math.max(0, video.currentTime - 10); showToast('- 10s'); } break;
-    case 'ArrowRight': e.preventDefault(); if (hasFile) { video.currentTime = Math.min(video.duration, video.currentTime + 10); showToast('+ 10s'); } break;
-    case 'ArrowUp': e.preventDefault(); setVolume(video.volume + 0.1); showToast('Vol ' + Math.round(video.volume * 100) + '%'); break;
-    case 'ArrowDown': e.preventDefault(); setVolume(video.volume - 0.1); showToast('Vol ' + Math.round(video.volume * 100) + '%'); break;
-  }
-});
-
-// ─── SIDEBAR ─────────────────────────────────────────
-toggleSidebar.onclick = () => sidebar.classList.toggle('collapsed');
-
-// ─── SUBTITLES ───────────────────────────────────────
-function parseSRT(text) {
-  const blocks = text.trim().replace(/\r\n/g,'\n').split(/\n\n+/);
-  const entries = [];
-  for (const block of blocks) {
-    const lines = block.split('\n');
-    if (lines.length < 3) continue;
-    const timeLine = lines.find(l => l.includes('-->'));
-    if (!timeLine) continue;
-    const [from, to] = timeLine.split('-->').map(t => {
-      const [h,m,rest] = t.trim().split(':');
-      const [s,ms] = rest.replace(',','.').split('.');
-      return parseInt(h)*3600 + parseInt(m)*60 + parseInt(s) + parseFloat('0.'+(ms||'0'));
-    });
-    const txt = lines.slice(lines.indexOf(timeLine)+1).join('\n').replace(/<[^>]+>/g,'').trim();
-    entries.push({ from, to, txt });
-  }
-  return entries;
-}
-
-function parseVTT(text) {
-  const lines = text.replace(/\r\n/g,'\n').split('\n');
-  const entries = [];
-  let i = 0;
-  while (i < lines.length) {
-    if (lines[i].includes('-->')) {
-      const [from, to] = lines[i].split('-->').map(t => {
-        const parts = t.trim().split(':');
-        const [s,ms] = parts[parts.length-1].split('.');
-        parts[parts.length-1] = s;
-        const [h,m,sec] = parts.length === 3 ? parts : ['0',...parts];
-        return parseInt(h)*3600 + parseInt(m)*60 + parseInt(sec) + parseFloat('0.'+(ms||'0'));
-      });
-      const txt = [];
-      i++;
-      while (i < lines.length && lines[i] !== '' && !lines[i].includes('-->')) {
-        txt.push(lines[i++]);
-      }
-      entries.push({ from, to, txt: txt.join('\n').replace(/<[^>]+>/g,'').trim() });
-    } else { i++; }
-  }
-  return entries;
-}
-
-function loadSubFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const text = e.target.result;
-    subtitles = file.name.endsWith('.vtt') ? parseVTT(text) : parseSRT(text);
-    subtitleEnabled = true;
-    subIndicator.classList.add('active');
-    subStatusText.textContent = file.name.length > 22 ? file.name.slice(0,20)+'…' : file.name;
-    toggleSub.classList.add('active');
-    showToast('Subtitle loaded');
-  };
-  reader.readAsText(file);
-}
-
-pickSub.onclick = () => subInput.click();
-subInput.onchange = e => { if (e.target.files[0]) loadSubFile(e.target.files[0]); };
-
-toggleSub.onclick = () => {
-  subtitleEnabled = !subtitleEnabled;
-  toggleSub.classList.toggle('active', subtitleEnabled);
-  if (!subtitleEnabled) { subText.textContent = ''; }
-  showToast(subtitleEnabled ? 'Subtitles on' : 'Subtitles off');
-};
-
-delayMinus.onclick = () => { subtitleDelay = Math.round((subtitleDelay - 0.5)*10)/10; delayVal.textContent = subtitleDelay.toFixed(1)+'s'; };
-delayPlus.onclick  = () => { subtitleDelay = Math.round((subtitleDelay + 0.5)*10)/10; delayVal.textContent = subtitleDelay.toFixed(1)+'s'; };
-
-function updateSubtitle() {
-  if (!subtitleEnabled || !subtitles.length) { subText.textContent = ''; return; }
-  const t = video.currentTime - subtitleDelay;
-  const entry = subtitles.find(s => t >= s.from && t <= s.to);
-  subText.textContent = entry ? entry.txt : '';
-}
 </script>
 </body>
 </html>
